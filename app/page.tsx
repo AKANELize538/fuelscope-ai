@@ -1,4 +1,6 @@
 import GasCards from './components/gas/GasCards';
+import NearestStation from './components/gas/NearestStation';
+import { BannerAd, LeaderboardAd, RectangleAd } from './components/ui/AdBanner';
 import StockCards from './components/stocks/StockCards';
 import NewsSection from './components/news/NewsSection';
 import MapView from './components/map/MapView';
@@ -34,7 +36,15 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="mt-8 flex justify-center">
+        <LeaderboardAd dataAdSlot="leaderboard-top" className="max-w-full lg:w-[728px]" />
+      </section>
+
       <section className="mt-16">
+        <NearestStation />
+      </section>
+
+      <section className="mt-12">
         <GasCards />
       </section>
 
@@ -42,12 +52,21 @@ export default function Home() {
         <StockCards />
       </section>
 
-      <section className="mt-12">
-        <NewsSection />
+      <section className="mt-12 grid gap-8 lg:grid-cols-[1.6fr_0.8fr]">
+        <div>
+          <NewsSection />
+        </div>
+        <div className="hidden lg:block">
+          <RectangleAd dataAdSlot="rectangle-sidebar" className="mx-auto" />
+        </div>
       </section>
 
       <section className="mt-12">
         <MapView />
+      </section>
+
+      <section className="mt-12 flex justify-center lg:hidden">
+        <BannerAd dataAdSlot="banner-mobile" className="max-w-full" />
       </section>
 
       <section id="overview" className="mt-16 grid gap-8 lg:grid-cols-[1.3fr_0.9fr]">
