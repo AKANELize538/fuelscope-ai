@@ -5,58 +5,86 @@ import { useEffect, useState } from 'react';
 type NewsItem = {
   title: string;
   source: string;
-  date: string;
-  summary: string;
-  keyword: string;
+  publishedAt: string;
+  description: string;
   url: string;
 };
 
-const mockNewsItems: NewsItem[] = [
+const fallbackNewsItems: NewsItem[] = [
   {
     source: 'Reuters Energy',
     title: 'US East Coast Gas Prices Rise Ahead of Summer',
-    date: 'May 26, 2026',
-    summary: 'AI summary will appear here...',
-    keyword: 'gas prices',
+    publishedAt: 'May 26, 2026',
+    description: 'AI summary placeholder — real GNews data will appear here soon.',
     url: 'https://reuters.com',
   },
   {
     source: 'Bloomberg Energy',
     title: 'Crude Oil Outlook Tightens as Energy Market Remains Volatile',
-    date: 'May 25, 2026',
-    summary: 'AI summary will appear here...',
-    keyword: 'crude oil',
+    publishedAt: 'May 25, 2026',
+    description: 'AI summary placeholder — real GNews data will appear here soon.',
     url: 'https://bloomberg.com',
   },
   {
     source: 'OilPrice.com',
     title: 'Petroleum Demand Grows Along US East Coast Fuel Corridor',
-    date: 'May 24, 2026',
-    summary: 'AI summary will appear here...',
-    keyword: 'US East Coast fuel',
+    publishedAt: 'May 24, 2026',
+    description: 'AI summary placeholder — real GNews data will appear here soon.',
     url: 'https://oilprice.com',
   },
   {
     source: 'GasBuddy',
     title: 'Energy Market Watch: Gas Prices and Fuel Trends for Drivers',
-    date: 'May 23, 2026',
-    summary: 'AI summary will appear here...',
-    keyword: 'energy market',
+    publishedAt: 'May 23, 2026',
+    description: 'AI summary placeholder — real GNews data will appear here soon.',
     url: 'https://gasbuddy.com',
   },
 ];
 
 export default function NewsSection() {
-  const [newsItems, setNewsItems] = useState<NewsItem[]>(mockNewsItems);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>(fallbackNewsItems);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchNews = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/news');
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body?.error || 'Unable to load news');
+      }
+
+      const data = await response.json();
+      const articles = Array.isArray(data.articles) ? data.articles : [];
+
+      const mappedNews = articles.map((article: any) => ({
+        title: article.title || 'Untitled',
+        source: article.source?.name || article.source || 'GNews',
+        publishedAt: new Date(article.publishedAt).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+        description: article.description || article.content || 'No description available.',
+        url: article.url || '#',
+      })) as NewsItem[];
+
+      setNewsItems(mappedNews.length > 0 ? mappedNews : fallbackNewsItems);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unexpected error');
+      setNewsItems(fallbackNewsItems);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setNewsItems([...mockNewsItems]);
-    }, 600000);
-
-    return () => {
-      window.clearInterval(interval);
-    };
+    fetchNews();
+    const interval = window.setInterval(fetchNews, 600000);
+    return () => window.clearInterval(interval);
   }, []);
 
   return (
@@ -65,23 +93,35 @@ export default function NewsSection() {
         <div>
           <h2 className="text-2xl font-semibold text-white">Energy News</h2>
           <p className="max-w-2xl text-sm text-zinc-400">
-            Fresh mock headlines with AI summary placeholders for future Groq integration.
+            Live GNews headlines for gas prices, crude oil, and the energy market.
           </p>
         </div>
         <div className="text-sm text-zinc-500">Auto-refresh every 10 minutes</div>
       </div>
 
+      {error ? (
+        <div className="mb-4 rounded-2xl bg-rose-950/80 border border-rose-800 p-4 text-sm text-rose-300">
+          Error loading news: {error}
+        </div>
+      ) : null}
+
+      {isLoading ? (
+        <div className="mb-4 rounded-2xl bg-zinc-950/70 p-4 text-sm text-zinc-400">
+          Loading news...
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {newsItems.map((item) => (
           <article
-            key={`${item.source}-${item.date}-${item.title}`}
+            key={`${item.source}-${item.publishedAt}-${item.title}`}
             className="rounded-xl bg-zinc-900 border border-zinc-800 p-5"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-lg font-semibold text-white">{item.title}</h3>
                 <div className="mt-2 text-sm text-zinc-400">
-                  {item.source} · {item.date}
+                  {item.source} · {item.publishedAt}
                 </div>
               </div>
               <a
@@ -93,10 +133,7 @@ export default function NewsSection() {
                 Read source
               </a>
             </div>
-            <p className="mt-4 text-sm leading-7 text-zinc-300">{item.summary}</p>
-            <div className="mt-4 rounded-2xl bg-zinc-950/70 px-4 py-3 text-sm text-zinc-400">
-              AI summary placeholder — Groq integration coming later.
-            </div>
+            <p className="mt-4 text-sm leading-7 text-zinc-300">{item.description}</p>
           </article>
         ))}
       </div>
