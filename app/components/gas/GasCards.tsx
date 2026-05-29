@@ -57,6 +57,4 @@ export default function GasCards() {
     </div>
   );
 }
-    </section>
-  );
-}
+
