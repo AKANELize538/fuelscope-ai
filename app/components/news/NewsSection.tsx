@@ -10,133 +10,68 @@ type NewsItem = {
   url: string;
 };
 
-const fallbackNewsItems: NewsItem[] = [
-  {
-    source: 'Reuters Energy',
-    title: 'US East Coast Gas Prices Rise Ahead of Summer',
-    publishedAt: 'May 26, 2026',
-    description: 'AI summary placeholder — real GNews data will appear here soon.',
-    url: 'https://reuters.com',
-  },
-  {
-    source: 'Bloomberg Energy',
-    title: 'Crude Oil Outlook Tightens as Energy Market Remains Volatile',
-    publishedAt: 'May 25, 2026',
-    description: 'AI summary placeholder — real GNews data will appear here soon.',
-    url: 'https://bloomberg.com',
-  },
-  {
-    source: 'OilPrice.com',
-    title: 'Petroleum Demand Grows Along US East Coast Fuel Corridor',
-    publishedAt: 'May 24, 2026',
-    description: 'AI summary placeholder — real GNews data will appear here soon.',
-    url: 'https://oilprice.com',
-  },
-  {
-    source: 'GasBuddy',
-    title: 'Energy Market Watch: Gas Prices and Fuel Trends for Drivers',
-    publishedAt: 'May 23, 2026',
-    description: 'AI summary placeholder — real GNews data will appear here soon.',
-    url: 'https://gasbuddy.com',
-  },
-];
-
 export default function NewsSection() {
-  const [newsItems, setNewsItems] = useState<NewsItem[]>(fallbackNewsItems);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchNews = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/news');
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body?.error || 'Unable to load news');
-      }
-
-      const data = await response.json();
-      const articles = Array.isArray(data.articles) ? data.articles : [];
-
-      const mappedNews = articles.map((article: any) => ({
-        title: article.title || 'Untitled',
-        source: article.source?.name || article.source || 'GNews',
-        publishedAt: new Date(article.publishedAt).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-        description: article.description || article.content || 'No description available.',
-        url: article.url || '#',
-      })) as NewsItem[];
-
-      setNewsItems(mappedNews.length > 0 ? mappedNews : fallbackNewsItems);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unexpected error');
-      setNewsItems(fallbackNewsItems);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchNews();
-    const interval = window.setInterval(fetchNews, 600000);
-    return () => window.clearInterval(interval);
+    fetch('/api/news')
+      .then((r) => r.json())
+      .then((data) => {
+        const articles = Array.isArray(data.articles) ? data.articles : [];
+        setNewsItems(articles.map((a: any) => ({
+          title: a.title || 'Untitled',
+          source: a.source?.name || a.source || 'GNews',
+          publishedAt: new Date(a.publishedAt).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric',
+          }),
+          description: a.description || 'No summary available.',
+          url: a.url || '#',
+        })));
+      })
+      .catch(() => setNewsItems([]))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  return (
-    <div>
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-white">Energy News</h2>
-          <p className="max-w-2xl text-sm text-zinc-400">
-            Live GNews headlines for gas prices, crude oil, and the energy market.
-          </p>
-        </div>
-        <div className="text-sm text-zinc-500">Auto-refresh every 10 minutes</div>
-      </div>
-
-      {error ? (
-        <div className="mb-4 rounded-2xl bg-rose-950/80 border border-rose-800 p-4 text-sm text-rose-300">
-          Error loading news: {error}
-        </div>
-      ) : null}
-
-      {isLoading ? (
-        <div className="mb-4 rounded-2xl bg-zinc-950/70 p-4 text-sm text-zinc-400">
-          Loading news...
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {newsItems.map((item) => (
-          <article
-            key={`${item.source}-${item.publishedAt}-${item.title}`}
-            className="rounded-xl bg-zinc-900 border border-zinc-800 p-5"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-white">{item.title}</h3>
-                <div className="mt-2 text-sm text-zinc-400">
-                  {item.source} · {item.publishedAt}
-                </div>
-              </div>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm font-medium text-amber-300 hover:text-amber-200"
-              >
-                Read source
-              </a>
-            </div>
-            <p className="mt-4 text-sm leading-7 text-zinc-300">{item.description}</p>
-          </article>
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1,2,3].map((i) => (
+          <div key={i} className="rounded-[18px] bg-white border border-[#e0e0e0] p-6 animate-pulse">
+            <div className="h-4 bg-[#f0f0f0] rounded w-3/4 mb-3" />
+            <div className="h-3 bg-[#f0f0f0] rounded w-1/2 mb-4" />
+            <div className="h-3 bg-[#f0f0f0] rounded w-full mb-2" />
+            <div className="h-3 bg-[#f0f0f0] rounded w-5/6" />
+          </div>
         ))}
       </div>
+    );
+  }
+
+  if (newsItems.length === 0) {
+    return (
+      <div className="rounded-[18px] bg-white border border-[#e0e0e0] p-6 text-center text-[#7a7a7a]">
+        No news available at the moment.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {newsItems.map((item, i) => (
+        <div key={i} className="rounded-[18px] bg-white border border-[#e0e0e0] p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[12px] font-semibold text-[#0066cc] uppercase tracking-[0.5px]">{item.source}</span>
+            <span className="text-[12px] text-[#7a7a7a]">· {item.publishedAt}</span>
+          </div>
+          <h3 className="text-[17px] font-semibold text-[#1d1d1f] tracking-[-0.374px] mb-2">{item.title}</h3>
+          <p className="text-[15px] text-[#7a7a7a] leading-[1.47] mb-4">{item.description}</p>
+          <a href={item.url} target="_blank" rel="noopener noreferrer"
+            className="text-[14px] font-semibold text-[#0066cc]">
+            Read more →
+          </a>
+        </div>
+      ))}
     </div>
   );
 }
