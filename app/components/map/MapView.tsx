@@ -64,7 +64,7 @@ export default function MapView() {
     <section className="rounded-[2rem] border border-zinc-800 bg-zinc-900 p-5">
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-white">Interactive Map</h2>
+
           <p className="max-w-2xl text-sm text-zinc-400">
             A dark Mapbox view centered on the US East Coast with mock gas station markers.
           </p>
