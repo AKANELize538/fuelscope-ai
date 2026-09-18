@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-import Navbar from "./components/navbar/Navbar";
+import AppShell from "./components/shell/AppShell";
 
 export const metadata: Metadata = {
   title: "FuelScope AI",
@@ -16,8 +16,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-zinc-950 text-white selection:bg-amber-400/30 selection:text-white">
-        <Navbar />
-        <div className="pt-24">{children}</div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
