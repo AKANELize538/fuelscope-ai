@@ -1,12 +1,16 @@
 import type { Level, Question, SubjectId } from "../types";
 import { KOREAN_QUESTIONS } from "./korean";
 import { MATH_QUESTIONS } from "./math";
+import { MATH_COMMON_QUESTIONS } from "./math-common";
 import { ENGLISH_QUESTIONS } from "./english";
 import { INQUIRY_QUESTIONS } from "./inquiry";
+import { KOREAN_EXAM_QUESTIONS } from "./korean-exam";
 
 export const QUESTION_BANK: Question[] = [
   ...KOREAN_QUESTIONS,
+  ...KOREAN_EXAM_QUESTIONS,
   ...MATH_QUESTIONS,
+  ...MATH_COMMON_QUESTIONS,
   ...ENGLISH_QUESTIONS,
   ...INQUIRY_QUESTIONS,
 ];

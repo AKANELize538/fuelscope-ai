@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { EXAM_LABEL, SUBJECTS } from "@/lib/study/curriculum";
+import { EXAM_LABEL, subjectsForGrade } from "@/lib/study/curriculum";
 import { questionCountByUnit } from "@/lib/study/questions";
 import { saveDiagnosis, type DiagnosisEntry } from "@/lib/study/actions";
+import { useStudyState } from "@/lib/study/store";
+import { useMemo } from "react";
 import type { ExamType, SubjectId } from "@/lib/study/types";
 import { Card, PageHeader } from "../components/ui";
 
@@ -14,6 +16,12 @@ type Entry = { score: string; examType: ExamType; wrongUnitIds: string[] };
 
 export default function DiagnosisPage() {
   const router = useRouter();
+  const { state } = useStudyState();
+  // 학년에 맞는 과목·단원만 보여 준다. 고1에게 미분 단원을 묻지 않기 위함이다.
+  const subjects = useMemo(
+    () => subjectsForGrade(state.profile?.grade ?? null),
+    [state.profile?.grade],
+  );
   const [entries, setEntries] = useState<Record<SubjectId, Entry>>({
     korean: { score: "", examType: "mock", wrongUnitIds: [] },
     math: { score: "", examType: "mock", wrongUnitIds: [] },
@@ -35,10 +43,10 @@ export default function DiagnosisPage() {
     });
   }
 
-  const hasAnyScore = SUBJECTS.some((s) => entries[s.id].score.trim() !== "");
+  const hasAnyScore = subjects.some((s) => entries[s.id].score.trim() !== "");
 
   function submit() {
-    const payload: DiagnosisEntry[] = SUBJECTS.map((s) => {
+    const payload: DiagnosisEntry[] = subjects.map((s) => {
       const raw = entries[s.id].score.trim();
       const parsed = raw === "" ? null : Number(raw);
       const score =
@@ -72,7 +80,7 @@ export default function DiagnosisPage() {
       </Card>
 
       <div className="space-y-4">
-        {SUBJECTS.map((subject) => {
+        {subjects.map((subject) => {
           const entry = entries[subject.id];
           return (
             <Card key={subject.id}>

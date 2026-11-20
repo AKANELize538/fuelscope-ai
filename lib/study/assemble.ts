@@ -74,58 +74,61 @@ function pick(
   if (need <= 0) return [];
   const out: Question[] = [];
 
-  const pools: Question[][] = [
-    // ① 약점 단원 + 해당 단계
-    questionsBy({ unitId, level }),
-    // ② 같은 과목의 같은 단계
-    //    단계를 단원보다 먼저 맞춘다. 기초 단계 학생에게 같은 단원이라는 이유로
-    //    응용 문항을 주면 학습이 무너지기 때문이다.
-    questionsBy({ subjectId, level }),
-    // ③ 같은 단원의 다른 단계
-    questionsBy({ unitId }),
-    // ④ 같은 과목 전체
-    questionsBy({ subjectId }),
-  ];
-
-  for (const pool of pools) {
-    // 최근에 맞힌 문항은 1순위에서 제외하고, 마지막 단계에서만 허용한다.
-    const strict = shuffle(
-      pool.filter((q) => !used.has(q.id) && !avoid.has(q.id)),
+  const take = (pool: Question[], relaxed = false): void => {
+    const filtered = shuffle(
+      pool.filter((q) => !used.has(q.id) && (relaxed || !avoid.has(q.id))),
       seed + out.length,
     );
-    for (const q of strict) {
+    for (const q of filtered) {
       if (out.length >= need) break;
       out.push(q);
       used.add(q.id);
     }
-    if (out.length >= need) return out;
-  }
+  };
 
-  // 그래도 모자라면 변형 문제를 만들어 채운다.
-  const templates = templatesFor(unitId, level).concat(templatesFor(unitId));
-  for (const tpl of templates) {
-    if (out.length >= need) break;
-    const variants = generateVariants(tpl, need - out.length, seed + out.length * 31);
-    for (const v of variants) {
+  const fillFromTemplates = (level_?: Level): void => {
+    if (out.length >= need) return;
+    const templates =
+      level_ === undefined ? templatesFor(unitId) : templatesFor(unitId, level_);
+    for (const tpl of templates) {
       if (out.length >= need) break;
-      if (used.has(v.id)) continue;
-      out.push(v);
-      used.add(v.id);
+      const variants = generateVariants(tpl, need - out.length, seed + out.length * 31);
+      for (const v of variants) {
+        if (out.length >= need) break;
+        if (used.has(v.id)) continue;
+        out.push(v);
+        used.add(v.id);
+      }
     }
-  }
+  };
 
-  // 마지막 수단: 최근에 푼 문항이라도 다시 낸다(빈 세트보다는 낫다).
-  if (out.length < need) {
-    const relaxed = shuffle(
-      questionsBy({ subjectId }).filter((q) => !used.has(q.id)),
-      seed + 7,
-    );
-    for (const q of relaxed) {
-      if (out.length >= need) break;
-      out.push(q);
-      used.add(q.id);
-    }
-  }
+  // ① 목표 단원 + 해당 단계의 DB 문항
+  take(questionsBy({ unitId, level }));
+  if (out.length >= need) return out;
+
+  // ② 같은 단원·같은 단계의 변형 문제
+  //    학생이 그 단원을 공부하려고 고른 것이므로,
+  //    다른 단원 문항으로 메우기 전에 같은 유형의 변형부터 쓴다.
+  //    (내신은 한 단원을 집중해서 파는 방식이라 이 순서가 실제 공부에 맞는다.)
+  fillFromTemplates(level);
+  if (out.length >= need) return out;
+
+  // ③ 같은 과목의 같은 단계
+  //    단계를 단원보다 먼저 맞춘다. 기초 단계 학생에게 같은 단원이라는 이유로
+  //    응용 문항을 주면 학습이 무너지기 때문이다.
+  take(questionsBy({ subjectId, level }));
+  if (out.length >= need) return out;
+
+  // ④ 같은 단원의 다른 단계 (DB → 변형)
+  take(questionsBy({ unitId }));
+  fillFromTemplates();
+  if (out.length >= need) return out;
+
+  // ⑤ 같은 과목 전체
+  take(questionsBy({ subjectId }));
+
+  // 마지막 수단: 최근에 맞힌 문항이라도 다시 낸다(빈 세트보다는 낫다).
+  take(questionsBy({ subjectId }), true);
 
   return out;
 }

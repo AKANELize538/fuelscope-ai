@@ -1,4 +1,10 @@
-import { SUBJECTS, getSubject, subjectName, unitName } from "./curriculum";
+import {
+  SUBJECTS,
+  getSubject,
+  subjectName,
+  unitAppliesToGrade,
+  unitName,
+} from "./curriculum";
 import { questionCountByUnit } from "./questions";
 import type {
   Attempt,
@@ -78,6 +84,7 @@ export function decideLevel(
 export function computeWeakUnits(state: StudyState): WeakUnit[] {
   const flagged = flaggedUnitIds(state);
   const counts = questionCountByUnit();
+  const grade = state.profile?.grade ?? null;
   const out: WeakUnit[] = [];
 
   for (const subject of SUBJECTS) {
@@ -116,6 +123,11 @@ export function computeWeakUnits(state: StudyState): WeakUnit[] {
 
       // 문항이 없는 단원은 추천해도 학습할 수 없으므로 뒤로 보낸다.
       if ((counts[unit.id] ?? 0) === 0) priority -= 100;
+
+      // 아직 배우지 않은 학년의 단원은 추천하지 않는다.
+      // (고1에게 미분을, 고3에게 고1 과정만을 권하는 일을 막는다.)
+      // 단, 본인이 약점으로 직접 체크한 단원은 학년과 무관하게 남긴다.
+      if (!isFlagged && !unitAppliesToGrade(unit, grade)) priority -= 100;
 
       const stored = state.mastery[unit.id];
       out.push({

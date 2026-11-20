@@ -64,13 +64,34 @@ export function randInt(rand: () => number, min: number, max: number): number {
   return min + Math.floor(rand() * (max - min + 1));
 }
 
-/** 정답과 오답 후보를 섞어 4지선다를 만든다. */
+/**
+ * 정답과 오답 후보를 섞어 4지선다를 만든다.
+ *
+ * 오답끼리 값이 겹치는 경우가 있으므로(예: p − a 와 a − p 가 p = a 일 때 둘 다 0)
+ * 정답을 포함해 전체를 중복 제거한 뒤, 숫자 문항이면 모자란 자리를
+ * 정답 주변의 다른 정수로 채운다. 같은 선택지가 두 개 보이면 문항 자체가 무효다.
+ */
 export function makeChoices(
   rand: () => number,
   answer: string,
   distractors: string[],
 ): { choices: string[]; answer: number } {
-  const pool = [answer, ...distractors.filter((d) => d !== answer)].slice(0, 4);
+  const pool: string[] = [];
+  for (const candidate of [answer, ...distractors]) {
+    if (!pool.includes(candidate)) pool.push(candidate);
+    if (pool.length === 4) break;
+  }
+
+  // 숫자 문항이면 정답 근처의 값으로 빈 자리를 메운다.
+  const numeric = Number(answer);
+  if (pool.length < 4 && Number.isFinite(numeric)) {
+    for (let step = 1; pool.length < 4 && step <= 12; step++) {
+      for (const candidate of [String(numeric + step), String(numeric - step)]) {
+        if (pool.length < 4 && !pool.includes(candidate)) pool.push(candidate);
+      }
+    }
+  }
+
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
     const tmp = pool[i]!;

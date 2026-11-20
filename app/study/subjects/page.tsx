@@ -133,7 +133,9 @@ export default function SubjectsPage() {
       </div>
 
       <p className="mt-6 text-center text-xs leading-relaxed text-zinc-600">
-        모든 지문과 문항은 유형 학습용으로 새로 작성한 것입니다.
+        현대 지문과 문항은 유형 학습용으로 새로 작성한 것이고,
+        <br />
+        고전 작품은 저작권이 소멸한 원문을 출처와 함께 싣습니다.
         <br />
         저작권이 있는 시험지 원문은 저장하거나 노출하지 않습니다.
       </p>

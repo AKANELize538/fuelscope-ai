@@ -1,4 +1,4 @@
-import type { Subject, SubjectId, Topic, Unit } from "./types";
+import type { Grade, Subject, SubjectId, Topic, Unit } from "./types";
 
 /**
  * 대입 준비에 필요한 학습 경로만 담은 교육과정 트리.
@@ -8,18 +8,29 @@ import type { Subject, SubjectId, Topic, Unit } from "./types";
  */
 
 type TopicSeed = [id: string, name: string];
-type UnitSeed = [id: string, name: string, weight: number, topics: TopicSeed[]];
+type UnitSeed = [
+  id: string,
+  name: string,
+  weight: number,
+  topics: TopicSeed[],
+  grades?: Grade[],
+];
 
 function buildUnits(subjectId: SubjectId, seeds: UnitSeed[]): Unit[] {
-  return seeds.map(([id, name, weight, topicSeeds]) => {
+  return seeds.map(([id, name, weight, topicSeeds, grades]) => {
     const topics: Topic[] = topicSeeds.map(([tid, tname]) => ({
       id: tid,
       unitId: id,
       name: tname,
     }));
-    return { id, subjectId, name, weight, topics };
+    return { id, subjectId, name, weight, grades, topics };
   });
 }
+
+/** 고1 공통수학 — 주로 고1 내신 범위 */
+const G1: Grade[] = ["고1", "고2"];
+/** 수학Ⅰ·Ⅱ·확률과 통계 — 고2 이후 */
+const G2: Grade[] = ["고2", "고3", "N수"];
 
 export const SUBJECTS: Subject[] = [
   {
@@ -52,6 +63,21 @@ export const SUBJECTS: Subject[] = [
       ["ko-speech", "화법과 작문", 3, [
         ["ko-speech-plan", "글쓰기 계획·고쳐쓰기"],
       ]],
+      ["ko-nego", "화법 · 협상", 4, [
+        ["ko-nego-strategy", "협상 전략 파악"],
+        ["ko-nego-attitude", "협상 태도 분류"],
+        ["ko-nego-agree", "합의 내용 정리"],
+      ]],
+      ["ko-read-law", "독서 · 법과 제도", 5, [
+        ["ko-read-law-concept", "요건·개념 관계 파악"],
+        ["ko-read-law-case", "사례 적용"],
+        ["ko-read-law-word", "문맥상 어휘 의미"],
+      ]],
+      ["ko-lit-pair", "문학 · 갈래 복합", 5, [
+        ["ko-lit-pair-common", "두 작품의 공통점"],
+        ["ko-lit-pair-diff", "두 작품의 차이점"],
+        ["ko-lit-pair-view", "외적 준거에 따른 감상"],
+      ]],
     ]),
   },
   {
@@ -60,32 +86,57 @@ export const SUBJECTS: Subject[] = [
     maxScore: 100,
     accent: "emerald",
     units: buildUnits("math", [
+      ["ma-func", "함수와 그래프", 5, [
+        ["ma-func-basic", "함수의 뜻과 종류"],
+        ["ma-func-comp", "합성함수"],
+        ["ma-func-inv", "역함수"],
+      ], G1],
+      ["ma-rational", "유리함수", 5, [
+        ["ma-rational-calc", "유리식의 계산"],
+        ["ma-rational-asym", "점근선과 평행이동"],
+        ["ma-rational-graph", "그래프의 개형과 대칭"],
+      ], G1],
+      ["ma-irrational", "무리함수", 5, [
+        ["ma-irr-calc", "무리식의 계산"],
+        ["ma-irr-domain", "정의역과 치역"],
+        ["ma-irr-graph", "그래프와 역함수"],
+      ], G1],
+      ["ma-prop", "집합과 명제", 4, [
+        ["ma-prop-truth", "명제의 참·거짓과 역·대우"],
+        ["ma-prop-cond", "필요조건과 충분조건"],
+        ["ma-prop-proof", "증명과 절대부등식"],
+      ], G1],
+      ["ma-count", "경우의 수", 4, [
+        ["ma-count-perm", "순열"],
+        ["ma-count-comb", "조합"],
+        ["ma-count-cond", "조건이 있는 배열"],
+      ], G1],
       ["ma-seq", "수열", 5, [
         ["ma-seq-arith", "등차수열"],
         ["ma-seq-geo", "등비수열"],
         ["ma-seq-sigma", "시그마와 합"],
-      ]],
+      ], G2],
       ["ma-explog", "지수와 로그", 4, [
         ["ma-explog-law", "지수·로그 법칙"],
         ["ma-explog-eq", "지수·로그 방정식"],
-      ]],
+      ], G2],
       ["ma-diff", "미분", 5, [
         ["ma-diff-basic", "도함수 계산"],
         ["ma-diff-tangent", "접선의 방정식"],
         ["ma-diff-extreme", "증가·감소와 극값"],
-      ]],
+      ], G2],
       ["ma-integral", "적분", 5, [
         ["ma-integral-basic", "부정적분·정적분"],
         ["ma-integral-area", "넓이 활용"],
-      ]],
+      ], G2],
       ["ma-trig", "삼각함수", 4, [
         ["ma-trig-value", "삼각함수의 값"],
         ["ma-trig-graph", "그래프와 주기"],
-      ]],
+      ], G2],
       ["ma-prob", "확률과 통계", 4, [
         ["ma-prob-count", "경우의 수·조합"],
         ["ma-prob-cond", "조건부확률"],
-      ]],
+      ], G2],
     ]),
   },
   {
@@ -127,19 +178,19 @@ export const SUBJECTS: Subject[] = [
       ["in-soc-culture", "사회·문화 · 문화와 사회", 4, [
         ["in-soc-culture-view", "문화 이해 관점"],
         ["in-soc-culture-change", "문화 변동"],
-      ]],
+      ], G2],
       ["in-soc-method", "사회·문화 · 탐구 방법", 5, [
         ["in-soc-method-type", "양적·질적 연구"],
         ["in-soc-method-data", "자료 수집 방법"],
-      ]],
+      ], G2],
       ["in-life-gene", "생명과학 · 유전", 5, [
         ["in-life-gene-cross", "가계도·교배 분석"],
         ["in-life-gene-mut", "돌연변이"],
-      ]],
+      ], G2],
       ["in-life-home", "생명과학 · 항상성", 4, [
         ["in-life-home-nerve", "신경계 흥분 전도"],
         ["in-life-home-horm", "호르몬과 조절"],
-      ]],
+      ], G2],
     ]),
   },
 ];
@@ -189,6 +240,29 @@ export function topicName(id: string): string {
 
 export function allUnits(): Unit[] {
   return Array.from(UNIT_MAP.values());
+}
+
+/**
+ * 해당 학년에게 자동 추천할 단원인지 판정한다.
+ * grades가 비어 있으면 전 학년 공통 단원이다.
+ */
+export function unitAppliesToGrade(unit: Unit, grade: Grade | null): boolean {
+  if (!unit.grades || unit.grades.length === 0) return true;
+  if (grade === null) return true;
+  return unit.grades.includes(grade);
+}
+
+/** 해당 학년이 학습할 단원만 추린다. */
+export function unitsForGrade(grade: Grade | null): Unit[] {
+  return allUnits().filter((u) => unitAppliesToGrade(u, grade));
+}
+
+/** 해당 학년이 학습할 단원이 하나라도 있는 과목만 추린다. */
+export function subjectsForGrade(grade: Grade | null): Subject[] {
+  return SUBJECTS.map((s) => ({
+    ...s,
+    units: s.units.filter((u) => unitAppliesToGrade(u, grade)),
+  })).filter((s) => s.units.length > 0);
 }
 
 export const LEVEL_LABEL: Record<"basic" | "advanced" | "applied", string> = {
